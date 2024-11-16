@@ -13,7 +13,7 @@ Build a websites that allows
 
 ## 2. **Demo**
 
-<img src='rag4query_demo.gif' width=500>
+https://github.com/user-attachments/assets/04253e21-ee24-40e9-bf72-306622c590ef
 
 - The user will upload files at the side bar, then click `Submit & Process`.
 - The user can type some questions at the input cell and press `Enter`, then the website will return the corresponding information.
