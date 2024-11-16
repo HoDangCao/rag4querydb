@@ -1,23 +1,11 @@
 import streamlit as st
 from schema_extraction import *
-import requests
 
 from langchain_community.embeddings.spacy_embeddings import SpacyEmbeddings
 from langchain_community.vectorstores import FAISS 
 from langchain.tools.retriever import create_retriever_tool
 
 embeddings = SpacyEmbeddings(model_name='en_core_web_sm')
-
-### handle the larger 200MB file
-# url = st.text_input("Enter the file URL:")
-# if st.button("Download and process file") and url:
-#     with requests.get(url, stream=True) as response:
-#         if response.status_code == 200:
-#             for chunk in response.iter_content(chunk_size=8192):
-#                 # Process each chunk of data
-#                 st.write(chunk[:100])  # Example: Display first 100 bytes of each chunk
-#         else:
-#             st.write("Failed to download file.")
 
 st.set_page_config(page_title="SQL Query Generator", page_icon=":mag:")
 
@@ -65,7 +53,7 @@ def main():
         ## Retrieve processing to get DB corresponding to the user question
         text_schema = {k: str(v) for k, v in st.session_state.extracted_schemas.items()}
         vector_store = FAISS.from_texts(list(text_schema.values()), embedding=embeddings)
-        retriever = vector_store.as_retriever(search_kwargs={"k": 1}) # top_k=1 will return only the top chunk.
+        retriever = vector_store.as_retriever(search_kwargs={"k": 1}) # return only the top chunk.
         retriever_chain = create_retriever_tool(retriever, 'DB_schema_extractor', 'This tool is to give database schema based on queries')
 
         ## print Query
@@ -75,9 +63,13 @@ def main():
                 schema = retriever_chain.invoke(user_question)
                 formatted_promt = format_promt(schema=schema, query=user_question)
 
-                best_db_index = list(st.session_state.extracted_schemas.values()).index(schema)
+                best_db_index = list(text_schema.values()).index(schema)
                 best_db_name = db_names[best_db_index]
                 # Generate process
+                # try:
+                #     final_query = col2.text_input('The generated query:', SQLquery_generater(formatted_promt=formatted_promt))
+                # except:
+                #     print('Please re-try. Something happen to our LLM.')
                 final_query = col2.text_input('The generated query:', SQLquery_generater(formatted_promt=formatted_promt))
                 final_DB = col2.selectbox('Appy for database:', db_names, index=db_names.index(best_db_name))
 
@@ -85,9 +77,9 @@ def main():
                 
                 if col2.button('Apply the query'):
                     try:
-                        col2.write('The results:', apply_query(default_db_url.format(final_DB), final_query))
+                        col2.dataframe(apply_query(default_db_url.format(final_DB), final_query))
                     except RuntimeError as e:
-                        col2.error(f'Error applying the query')
+                        col2.error(f'Error applying the query. Please check the SQL code.')
                     
             except RuntimeError as e:
                 col2.error(f"Error setting up the language model")

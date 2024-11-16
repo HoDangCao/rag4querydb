@@ -1,0 +1,7 @@
+torch==2.3.0 -f https://download.pytorch.org/whl/torch_stable.html
+streamlit
+sqlalchemy
+langchain
+langchain_community
+Spacy
+transformers
